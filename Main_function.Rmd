@@ -1,0 +1,451 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(glmnet)
+library(caret)  
+library(splines) 
+```
+
+```{r}
+
+N <- 100  
+Y <- rbinom(N, 1, 0.5)
+A <- rbinom(N, 1, 0.5)
+S <- matrix(rnorm(N), nrow = N)
+X <- matrix(rnorm(N * 5), nrow = N, ncol = 5)
+
+
+K <- 5  
+folds <- sample(rep(1:K, length.out = N))
+
+main_function(N,Y,A,S,X,K,folds)
+```
+
+
+```{r}
+main_function <- function(N,Y,A,S,X,K,folds){
+# Step 1
+xi_hat <- list()
+zetas_hat <- list()
+
+for (k in 1:K) {
+  temp <- which(folds != k)
+  W_k <- cbind(X[temp, ], S[temp, ])
+
+  xi_hat[[k]] <-glmnet(W_k, A[temp], alpha = 1, family = "binomial", lambda = sqrt(log(ncol(W_k)) / length(temp)))
+  zetas_hat[[k]] <- glmnet(W_k, Y[temp], alpha = 1, family = "binomial", lambda = sqrt(log(ncol(W_k)) / length(temp)))
+
+}
+
+# Step 2
+alpha_matrix <- vector("list", K)
+beta_matrix <- vector("list", K)
+
+for (k1 in 1:K) {
+  alpha_matrix[[k1]] <- vector("list", K)
+  beta_matrix[[k1]] <- vector("list", K)
+  for (k2 in 1:K) {
+      temp <- which(!folds %in% c(k1, k2))
+      X_temp <- X[temp, ]
+      R_temp <- rep(1, length(temp))  
+      alpha_matrix[[k1]][[k2]] <- glmnet(X_temp, A[temp], alpha = 1, family = "binomial", weights = R_temp, lambda = sqrt(log(ncol(X_temp)) / length(temp)))
+        beta_matrix[[k1]][[k2]] <- glmnet(X_temp, Y[temp], alpha = 1, family = "binomial", weights = R_temp, lambda = sqrt(log(ncol(X_temp)) / length(temp)))
+  }
+}
+
+# Step 3:
+M <- 2
+
+tau <- function(x) {
+  return(sign(x) * pmin(abs(x), 2 * M))
+}
+
+g <- function(x) {
+  return(1 / (1 + exp(-x)))
+}
+
+g_tau <- function(x) {
+  return(exp(tau(x)))
+}
+
+dg_tau <- function(x) {
+  return(g(x) * (1 - g(x)))
+}
+
+for (k1 in 1:K) {
+  temp <- which(folds != k1)
+  X_temp <- X[temp, ]
+
+  for (k2 in 1:K) {
+    if (k1 != k2) {
+      beta_init <- beta_matrix[[k1]][[k2]]
+      alpha_init <- alpha_matrix[[k1]][[k2]]
+
+        beta_coef <- coef(beta_init, s = "lambda.min")[-1]
+        alpha_coef <- coef(alpha_init, s = "lambda.min")[-1]
+
+        l_alpha_a <- function(A, X, beta) {
+          return(dg_tau(X %*% beta) * ((A - A) * (X %*% alpha_coef) + (A == A) * exp(-A * (X %*% alpha_coef))))
+        }
+
+        l_beta_a <- function(Y, X, alpha) {
+          return(g_tau(-A * (X %*% alpha)) * (log(1 + exp(X %*% beta_coef)) - Y * (X %*% beta_coef)))
+        }
+
+        alpha_hat <- glmnet(X_temp, A[temp], alpha = 1, family = "binomial", lambda = sqrt(log(ncol(X_temp)) / length(temp)))
+        beta_hat <- glmnet(X_temp, Y[temp], alpha = 1, family = "binomial", lambda = sqrt(log(ncol(X_temp)) / length(temp)))
+
+        alpha_matrix[[k1]][[k2]] <- alpha_hat
+        beta_matrix[[k1]][[k2]] <- beta_hat
+    }
+  }
+}
+
+# Step 4:
+pi_1 <- vector("list", K)
+pi_0 <- vector("list", K)
+mu_a <- vector("list", K)
+Pi_a <- vector("list", K)
+m_a <- vector("list", K)
+
+for (k in 1:K) {
+  temp <- which(folds != k)
+  X_temp <- X[temp, ]
+  W_temp <- cbind(X[temp, ], S[temp, ])
+
+    alpha_coef_1 <- coef(alpha_matrix[[k]][[1]], s = "lambda.min")[-1]
+    alpha_coef_0 <- -alpha_coef_1
+    
+    pi_1[[k]] <- g_tau(X_temp %*% alpha_coef_1)
+    pi_0[[k]] <- g_tau(X_temp %*% alpha_coef_0)
+
+    beta_coef <- coef(beta_matrix[[k]][[1]], s = "lambda.min")[-1]
+    mu_a[[k]] <- g(X_temp %*% beta_coef)
+
+    xi_coef <- coef(xi_hat[[k]], s = "lambda.min")[-1]
+    Pi_a[[k]] <- g(W_temp %*% xi_coef)
+
+    zeta_coef <- coef(zetas_hat[[k]], s = "lambda.min")[-1]
+    m_a[[k]] <- g(W_temp %*% zeta_coef)
+}
+
+#step 5
+mu1 <- unlist(lapply(mu_a, function(mu) mu))
+mu0 <- mu1 
+pi1 <- unlist(lapply(pi_1, function(pi) pi))
+pi0 <- unlist(lapply(pi_0, function(pi) pi))
+
+imp.A <- unlist(lapply(Pi_a, function(pi) pi))
+imp.A1Y1 <- unlist(lapply(m_a, function(m) m))
+imp.A0Y1 <- imp.A1Y1
+
+ate_result_SL <- ate.SL(Y, A, mu1, mu0, pi1, pi0)
+
+ate_result_SSL <- ate.SSL(Y, A, mu1, mu0, pi1, pi0, imp.A, imp.A1Y1, imp.A0Y1)
+
+
+# Step 6: 
+V_DR <- rou_N * mean((V_hat - ATE_DR)^2)
+Z_alpha_2 <- qnorm(0.975)  
+CI_lower <- ATE_DR - Z_alpha_2 * sqrt(V_DR / N)
+CI_upper <- ATE_DR + Z_alpha_2 * sqrt(V_DR / N)
+
+
+
+#return
+return(list(V_DR = V_DR, Z_alpha_2 = Z_alpha_2, CI_lower = CI_lower, CI_upper = CI_upper))
+}
+```
+
+
+
+
+#ate_np
+```{r}
+ate.SL = function(Y, A, mu1, mu0, pi1,pi0, min.pi = 0.05, max.pi = 0.95)
+{
+  pi1 = pmin(max.pi, pmax(min.pi, pi1))
+  pi1 = pi1 * mean(A)/mean(pi1)
+  pi0 = pmin(max.pi, pmax(min.pi, pi0))
+  pi0 = pi0 * mean(A)/mean(pi0)
+  
+  infl = mu1 + A/pi1*(Y-mu1) - mu0 - (1-A)/pi0*(Y-mu0)
+  return(list(est = mean(infl),
+              se = sd(infl)/sqrt(length(Y))))
+}
+
+ate.SSL = function(Y,A, mu1, mu0, pi1,pi0, imp.A,
+                   imp.A1Y1, imp.A0Y1, min.pi = 0.05, max.pi = 0.95)
+{
+  n = length(Y)
+  N = length(pi1)
+  rho.inv = N/n
+  
+  pi1 = pmin(max.pi, pmax(min.pi, pi1))
+  pi1 = pi1 * mean(A)/mean(pi1)
+  pi0 = pmin(max.pi, pmax(min.pi, pi0))
+  pi0 = pi0 * mean(A)/mean(pi0)
+  
+  infl = (
+    (mu1 + imp.A1Y1/pi1 - imp.A*mu1/pi1) - 
+    (mu0 + imp.A0Y1/pi0 - (1-imp.A)*mu0/pi0)
+    )
+  infl[1:n] = infl[1:n] + rho.inv*(
+    (A*Y - imp.A1Y1[1:n])/pi1[1:n]
+    -((1-A)*Y - imp.A0Y1[1:n])/pi0[1:n]
+    - (A - imp.A[1:n])*(mu1[1:n]/pi1[1:n] + mu0[1:n]/pi0[1:n])
+  )
+  
+  return(list(est = mean(infl),
+              se = sd(infl)/sqrt(N)))
+}
+
+```
+
+
+#beta-xi-full  ( currently working on... )
+```{r}
+beta.xi.full = function(X,S,trt,eta,n,
+                        link, dlink, inv.link,
+                        nlambda = 100, max.df = sqrt(n), 
+                        lambda.list = NULL, 
+                        maxit=1000, tol = 1e-7,
+                        max.step = 1,
+                        beta = rep(0,1+ncol(X)),
+                        init.xi1 = 0.1,
+                        xi = NULL)
+{
+  p = ncol(X)
+  N = nrow(X)
+  IX = cbind(1,X)
+  W = cbind(1,X,S)
+  pred.eta = expit(drop(W[-1:-n,]%*% eta))
+  
+  if(is.null(xi))
+  {
+    active = 1+which.max(abs(apply(W[1:n,-1], 2, cor,trt[1:n])))
+    init.xi1 = init.xi1*sign(cor(W[1:n,active], trt[1:n]))
+    xi0 = 0
+    
+    lp.beta = IX%*%beta
+    pred.beta = link(lp.beta)
+    dpred.beta = dlink(lp.beta[-1:-n])
+    lp.xi = (W[,active]* init.xi1+xi0)
+    pred.xi = link(lp.xi)
+    dpred.xi = dlink(lp.xi[1:n])
+    # initial beta
+    for(iter in 1:(maxit*10))
+    {
+      score.xi = mean((pred.beta[1:n]*(trt[1:n]-pred.xi[1:n])))
+      cont.xi= abs(score.xi)>tol
+      if(cont.xi)
+      {
+        Hess = mean(dpred.xi*pred.beta[1:n])
+        move = score.xi/Hess
+        move.size = abs(move)
+        if(move.size > max.step)
+        {
+          move = move/move.size*max.step
+        }
+        xi0 = xi0 + move
+        lp.xi = lp.xi + move
+        pred.xi = link(lp.xi)
+        dpred.xi = dlink(lp.xi[1:n])
+      }
+      score = drop((pred.eta-pred.beta[-1:-n]*pred.xi[-1:-n]) %*% IX[-1:-n,])/N
+      cont.beta = any(abs(score)>tol)
+      if(cont.beta)
+      {
+        Hess = t(IX[-1:-n,])%*% (dpred.beta*pred.xi[-1:-n] * IX[-1:-n,])/N
+        # Hess.imp = (((tmp.mf)^(-2) * t( %*% IX[1:n,])/n)  %*%
+        #               (tmp.mf*((dlink(lp[1:n])*trt[1:n]) %*% IX[1:n,])/n
+        #                - mean(link(lp[1:n])*trt[1:n])*(dlink(lp[1:n]) %*% IX[1:n,])/n)
+        # )
+        move = solve(Hess,score)
+        move.size = sqrt(sum(move^2))
+        if(move.size > max.step)
+        {
+          move = move/move.size*max.step
+        }
+        beta = beta + move
+        lp.beta = IX%*%beta
+        pred.beta = link(lp.beta)
+        dpred.beta = dlink(lp.beta[-1:-n])
+      }
+      # print(xi0)
+      # print(c(score.xi, max(abs(score))))
+      if(!(cont.xi | cont.beta))
+        break
+    }
+    
+    if(iter == (maxit*10))
+    {
+      stop("Failed at initialization.")
+    }
+
+  
+  
+    # solution path 
+    resn = (trt[1:n]-pred.xi[1:n])
+    score.xi = c(drop((pred.beta[1:n]*resn) %*% W[1:n,1:(p+1)]),
+      drop(resn %*% W[1:n,-1:-(p+1)]))/n
+    
+    lambda = max(abs(score.xi))
+    if(is.null(lambda.list))
+    {
+      lambda.list = lambda* sqrt(0.95)^(1:nlambda - 1)
+    }else{
+      lambda.list = c(lambda, lambda.list)
+      nlambda = length(lambda.list)
+    }
+    
+    xi.lambda = sparseMatrix(1,1, x = xi0, 
+                             dims = c(ncol(W),nlambda))
+    beta.lambda = matrix(0, p+1, nlambda)
+    active = c(1,active)
+    xi = rep(0,ncol(W))
+    xi[active] = c(xi0,init.xi1)
+  }else
+  {
+    lp.beta = IX%*%beta
+    pred.beta = link(lp.beta)
+    dpred.beta = dlink(lp.beta[-1:-n])
+    lp.xi = drop(W %*% xi)
+    pred.xi = link(lp.xi)
+    dpred.xi = dlink(lp.xi[1:n])
+    active = c(1,1+which(xi[-1]!=0))
+    if(is.null(lambda.list))
+    {
+      stop("Must provide lambda with initial xi.")
+    }
+    nlambda = length(lambda.list)
+    xi.lambda = sparseMatrix(1,1, x = 0, 
+                             dims = c(ncol(W),nlambda))
+    beta.lambda = matrix(0, p+1, nlambda)
+  }
+  # load("other/test/test_dat.rda")
+  # ilam = 80
+  # xi = as.numeric(xi)
+  
+  for(ilam in 1:nlambda)
+  {
+    # print(ilam)
+    lambda = lambda.list[ilam]
+    for(iter in 1:maxit)
+    {
+      resn = (trt[1:n]-pred.xi[1:n])
+      score.xi = c(drop((pred.beta[1:n]*resn) %*% W[1:n,1:(p+1)]),
+                   drop(resn %*% W[1:n,-1:-(p+1)]))/n
+      active = sort(unique(c(active,which(abs(score.xi) > lambda+tol))))
+      score.xi.active = score.xi[active]
+      score.xi.active[-1] = score.xi.active[-1] - sign(score.xi.active[-1])*lambda
+      
+      cont.xi = any(abs(score.xi.active)>tol)
+      if(cont.xi)
+      {
+        activeX = active<= p+1
+        Hess.active = rbind(t(W[1:n,active[activeX]])%*%
+                              (pred.beta[1:n]*dpred.xi*W[1:n, active]),
+                            t(W[1:n,active[!activeX]])%*%
+                              (dpred.xi*W[1:n, active]))/n
+        move <- tryCatch(solve(Hess.active,score.xi.active),
+                         error = function(e) {return(NA)})
+        if(any(is.na(move)))
+        {
+          iter = maxit
+          break
+        }
+        move.size = sqrt(sum(move^2))
+        if(move.size > max.step)
+        {
+          move = move/move.size*max.step
+        }
+        deactive = setdiff(which((sign(move)== sign(-xi[active])) & 
+                                   (abs(move) >= abs(xi[active]))),
+                           1)
+        if(length(deactive)>0)
+        {
+          xi[active[deactive]] = 0
+          move = move[-deactive]
+          active = active[-deactive]
+        }
+        xi[active] = xi[active] + move
+        lp.xi = lp.xi + drop(W[,active] %*% move)
+        pred.xi = link(lp.xi)
+        dpred.xi = dlink(lp.xi[1:n])
+      }
+      score =  drop((pred.eta-pred.beta[-1:-n]*pred.xi[-1:-n]) %*% IX[-1:-n,])/N
+      cont.beta =  any(abs(score) > tol)
+      if(cont.beta)
+      {
+        Hess = t(IX[-1:-n,])%*% (dpred.beta*pred.xi[-1:-n] * IX[-1:-n,])/N
+        move <- tryCatch(solve(Hess,score),
+                 error = function(e) {return(NA)})
+        if(any(is.na(move)))
+        {
+          iter = maxit
+          break
+        }
+        move.size = sqrt(sum(move^2))
+        if(move.size > max.step)
+        {
+          move = move/move.size*max.step
+        }
+        beta =  beta + move
+        lp.beta = IX%*%beta
+        pred.beta = link(lp.beta)
+        dpred.beta = dlink(lp.beta[-1:-n])
+      }      
+      # print(xi[active])
+      # print(c(score.xi[1],
+      # max(abs(score.xi))-lambda,max(abs(score))))
+      if(!(cont.xi | cont.beta))
+        break
+
+    }
+    # print(c(ilam,score.xi[1],
+    #         max(abs(score.xi))-lambda,max(abs(score))))
+    if(iter == maxit)
+    {
+      warning(paste("Fail to converge at ",ilam,"th lambda.",
+                 sep=''))
+      return(list(lambda = lambda.list[1:(ilam-1)], 
+                  beta = beta.lambda[,1:(ilam-1)], 
+                  xi = xi.lambda[,1:(ilam-1)]))
+    }
+    active = which(xi!=0)
+    xi.lambda[active,ilam] = xi[active]
+    beta.lambda[,ilam] = beta
+    
+    if(sum(xi!=0) > max.df)
+    {
+      warning(paste("Reach max df ",ilam,"th lambda.",
+                    sep=''))
+      xi.lambda = xi.lambda[,1:ilam]
+      beta.lambda = beta.lambda[,1:ilam]
+      lambda.list = lambda.list[1:ilam]
+      nlambda = ilam
+      break
+    }
+  }
+  # 
+  # save(list=objects(), 
+  #      file = "other/test/test_dat.rda")
+  
+  return(list(lambda = lambda.list, 
+              beta = beta.lambda, 
+              xi = xi.lambda))
+}
+```
+
+#add expit function
+```{r}
+
+expit <- function(x) { 1 / (1 + exp(-x)) }
+
+```
+
