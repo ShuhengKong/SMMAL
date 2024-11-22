@@ -1,2 +1,4 @@
 SMMAL\.Rproj$
 ^\.Rproj\.user$
+^LICENSE\.md$
+^Main_function\.Rmd$
