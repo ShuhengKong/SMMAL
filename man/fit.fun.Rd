@@ -4,12 +4,16 @@
 \alias{fit.fun}
 \title{Fit Logistic Regression and Extract Coefficients}
 \usage{
-fit.fun(formula, ...)
+fit.fun(formula, data, method, ...)
 }
 \arguments{
 \item{formula}{An object of class \code{formula} (e.g., \code{response ~ predictor1 + predictor2}) describing the model to be fitted.}
 
+\item{data}{Data}
+
 \item{...}{Additional arguments to be passed to \code{glm}, such as \code{data}, \code{weights}, or \code{subset}.}
+
+\item{methos}{Which model to use}
 }
 \value{
 A numeric vector containing the coefficients of the fitted logistic regression model.
