@@ -2,18 +2,14 @@
 #'
 #' This is an example dataset included in the package.
 #'
-#' @format ## `dat`
+#' @format ## `sample_data`
 #' A data frame(N=100):
 #' \describe{
 #'   \item{Y}{Observed outcomes}
 #'   \item{A}{Treatment indicator (1 for treated, 0 for control)}
-#'   \item{X}{Year}
+#'   \item{X}{}
 #'   \item{S}{}
-#'   \item{pi}{}
-#'   \item{mu1}{}
-#'   \item{mu0}{}
-#'   \item{imp.meas}{}
 #' }
-"dat"
+"sample_data"
 
 

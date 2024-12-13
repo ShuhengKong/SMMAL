@@ -12,9 +12,15 @@
 #'
 main_function <- function(Y,A,S,X,K,folds){
   # Step 1
-  result <-cross_validation(K,folds,X,S,A)
-  parameter_list_W <- result$parameter_list_W
-  parameter_list_Y <- result$parameter_list_Y
+  result <- cross_validation(num_labelled, K, sample_data, num_x, num_S)
+  Y <- result$Y
+  A <- result$A
+  X <- result$X
+  S <- result$S
+  W <- result$W
+  foldid <- result$foldid
+
+
 
   # Step 2
   result_matrix_raw <- train_models(K,folds,X,A)
