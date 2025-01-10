@@ -23,14 +23,14 @@ main_function <- function(Y,A,S,X,K,folds){
 
 
   # Step 2
-  result_matrix_raw <- train_models(K,folds,X,A)
-  X_matrix_raw <- result_matrix_raw$X_matrix_raw
-  Y_matrix_raw <- result_matrix_raw$Y_matrix_raw
+#  result_matrix_raw <- train_models(K,folds,X,A)
+#  X_matrix_raw <- result_matrix_raw$X_matrix_raw
+#  Y_matrix_raw <- result_matrix_raw$Y_matrix_raw
 
   # Step 3:
-  result_matrix <- refine_models(K,folds, X,A,Y,X_matrix_raw,Y_matrix_raw)
-  X_matrix <- result_matrix$X_matrix
-  Y_matrix <- result_matrix$Y_matrix
+#  result_matrix <- refine_models(K,folds, X,A,Y,X_matrix_raw,Y_matrix_raw)
+#  X_matrix <- result_matrix$X_matrix
+#  Y_matrix <- result_matrix$Y_matrix
 
   # Step 4:
   result_parameter<-compute_parameter(K,folds,X,S,X_matrix,Y_matrix,parameter_list_W,parameter_list_Y)

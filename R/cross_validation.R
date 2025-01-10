@@ -18,11 +18,14 @@
 #' @export
 #'
 cross_validation <- function(N,num_labelled,K,data,num_x,num_S){
-  Y=data[, 1, drop = FALSE]
-  A=data[, 2, drop = FALSE]
-  X=data[, 3:2+num_x, drop = FALSE]
-  S=data[, (2+num_x):(1+num_x+num_s), drop = FALSE]
+  Y=data$Y
+  #用list
+  Y=data$Y
+  A=data$A
+  X=data$X
+  S=data$S
   W = rbind(X, S)
+  #用R
   foldid = c(rep_len(1:K, length.out = num_labelled)[sample(num_labelled)],
              rep_len(1:K, length.out = N-num_labelled)[sample(N-num_labelled)])
 
