@@ -1,0 +1,32 @@
+---
+title: "SMMAL_vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SMMAL_vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SMMAL)
+file_path <- system.file("extdata", "sample_data.rds", package = "SMMAL")
+dat <- readRDS(file_path)
+
+  # Y and A are numeric vector 
+  Y <- dat$Y
+  A <- dat$A
+  
+  # S and X needs to be data frame
+  S <- data.frame(dat$S)
+  X <- data.frame(dat$X)
+
+SMMAL_output <- SMMAL(N=1000,Y=Y,A=A,S=S,X=X,K=5,top_n=5)
+print(SMMAL_output)
+```

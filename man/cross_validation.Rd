@@ -2,29 +2,30 @@
 % Please edit documentation in R/cross_validation.R
 \name{cross_validation}
 \alias{cross_validation}
-\title{Title}
+\title{Assign Cross-Validation Folds for Labelled and Unlabelled Data}
 \usage{
-cross_validation(K, folds, X, S, A)
+cross_validation(N, K, A)
 }
 \arguments{
-\item{K}{Integer. The number of folds for cross-validation.}
+\item{N}{Integer. Total number of observations in the dataset.}
 
-\item{folds}{Integer vector. Fold assignments for each observation, with values from 1 to \eqn{K}.}
+\item{K}{Integer. Number of folds to assign for cross-validation.}
 
-\item{X}{Matrix. Predictor matrix (\eqn{n \times p}), where \eqn{n} is the number of observations
-and \eqn{p} is the number of predictors.}
-
-\item{S}{Matrix. Auxiliary predictor matrix (\eqn{n \times q}) used in model training.}
-
-\item{A}{Numeric vector. Treatment or intervention indicator (binary or categorical).}
+\item{A}{Vector. Treatment assignment vector, may contain \code{NA} for unlabelled samples.}
 }
 \value{
 A list containing:
 \describe{
-\item{parameter_list_W}{List of parameters associated with the combined predictor matrix \eqn{W}.}
-\item{parameter_list_Y}{List of parameters associated with the outcome matrix \eqn{Y}.}
+\item{R}{Binary vector of length \code{N}. 1 indicates labelled data (non-missing \code{A}), 0 indicates unlabelled data.}
+\item{foldid}{Integer vector of length \code{N}. Fold assignments (1 to \code{K}) for each observation, for use in cross-validation.}
 }
 }
 \description{
-Title
+Creates fold assignments for both labelled and unlabelled data using stratified random sampling,
+ensuring an approximately equal number of samples per fold within each group.
+}
+\details{
+This function supports semi-supervised learning workflows by separating observations into labelled and unlabelled groups
+based on the presence of treatment labels (\code{A}). It assigns fold indices for both groups independently, allowing
+balanced cross-fitting or validation strategies within each subgroup.
 }

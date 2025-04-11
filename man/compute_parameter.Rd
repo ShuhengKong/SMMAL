@@ -2,46 +2,44 @@
 % Please edit documentation in R/compute_parameter.R
 \name{compute_parameter}
 \alias{compute_parameter}
-\title{Title}
+\title{Estimate Conditional Expectations and Propensities for Semi-Supervised ATE}
 \usage{
-compute_parameter(
-  K,
-  folds,
-  X,
-  S,
-  X_matrix,
-  Y_matrix,
-  parameter_list_W,
-  parameter_list_Y
-)
+compute_parameter(K, Y, A, X, S, W, foldid, R, cf_model)
 }
 \arguments{
-\item{K}{Integer. The number of folds for cross-validation.}
+\item{K}{Integer. Number of cross-fitting folds.}
 
-\item{folds}{Integer vector. Fold assignments for each observation.}
+\item{Y}{Numeric vector. Outcome variable (can contain NAs for unlabelled data).}
 
-\item{X}{Matrix. Predictor matrix (\eqn{n \times p}) used for model training.}
+\item{A}{Numeric vector. Treatment assignment (0 or 1, can contain NAs).}
 
-\item{S}{Matrix. Auxiliary predictor matrix (\eqn{n \times q}) used for training.}
+\item{X}{Matrix or data frame. Covariates used for outcome and propensity estimation.}
 
-\item{X_matrix}{Matrix. Refined predictor matrix (\eqn{n \times p}) for storing intermediate results.}
+\item{S}{Matrix or data frame. Additional covariates only used in imputation models.}
 
-\item{Y_matrix}{Matrix. Refined response matrix (\eqn{n \times m}) for storing intermediate results.}
+\item{W}{Matrix or data frame. Combination of X and S.}
 
-\item{parameter_list_W}{List. A list of parameters associated with the combined design matrix \eqn{W}.}
+\item{foldid}{Integer vector. Fold assignments for cross-fitting.}
 
-\item{parameter_list_Y}{List. A list of parameters associated with the response matrix \eqn{Y}.}
+\item{R}{Binary vector. 1 indicates labelled data (non-missing A and Y), 0 indicates unlabelled.}
+
+\item{cf_model}{Function. Cross-fitting wrapper function, e.g., using Super Learner or another learner.}
 }
 \value{
-A list containing:
+A list containing estimated nuisance parameters (each is a vector):
 \describe{
-\item{pi_1}{Numeric. Computed propensity score for the treatment group (\eqn{\pi_1}).}
-\item{pi_0}{Numeric. Computed propensity score for the control group (\eqn{\pi_0}).}
-\item{mu_a}{Numeric. Predicted outcome under treatment.}
-\item{Pi_a}{Numeric. Predicted propensity score from auxiliary models.}
-\item{m_a}{Numeric. Auxiliary outcome predictions.}
+\item{pi1.bs}{Estimated propensity score \eqn{P(A = 1 | X)}}
+\item{pi0.bs}{Estimated propensity score \eqn{P(A = 0 | X)} = 1 - pi1.bs}
+\item{mu1.bs}{Estimated outcome regression \eqn{E[Y | A = 1, X]}}
+\item{mu0.bs}{Estimated outcome regression \eqn{E[Y | A = 0, X]}}
+\item{cap_pi1.bs}{Estimated imputed propensity score \eqn{P(A = 1 | W)}}
+\item{cap_pi0.bs}{Estimated imputed propensity score \eqn{P(A = 0 | W)} = 1 - cap_pi1.bs}
+\item{m1.bs}{Estimated imputed outcome regression \eqn{E[Y | A = 1, W]}}
+\item{m0.bs}{Estimated imputed outcome regression \eqn{E[Y | A = 0, W]}}
 }
 }
 \description{
-Title
+Computes nuisance parameters such as conditional expectations and propensity scores
+using cross-fitting for both labelled and unlabelled data. This function is central
+for ATE estimation under semi-supervised or doubly robust frameworks.
 }

@@ -2,7 +2,6 @@
 % Please edit documentation in R/SMMAL-package.R
 \docType{package}
 \name{SMMAL-package}
-\alias{SMMAL}
 \alias{SMMAL-package}
 \title{SMMAL: What the Package Does (One Line, Title Case)}
 \description{

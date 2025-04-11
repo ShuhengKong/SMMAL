@@ -12,3 +12,12 @@ RoxygenNote: 7.3.2
 Depends: 
     R (>= 2.10)
 LazyData: true
+Imports:
+    glmnet,
+    randomForest,
+    splines2,
+    xgboost
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

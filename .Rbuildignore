@@ -2,3 +2,6 @@ SMMAL\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^Main_function\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
