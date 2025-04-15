@@ -3,12 +3,18 @@
 \docType{package}
 \name{SMMAL-package}
 \alias{SMMAL-package}
-\title{SMMAL: What the Package Does (One Line, Title Case)}
+\title{SMMAL: Semi-Supervised Estimation of Average Treatment Effects}
 \description{
-What the package does (one paragraph).
+Provides a pipeline for estimating the average treatment effect (ATE) using semi-supervised learning methods. Includes variable selection via LASSO, flexible outcome modeling using cross-fitting with options such as xgboost, random forest, and B-splines, and a doubly robust ATE estimation using both labeled and unlabeled data. Includes vignette-based documentation.
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Shuheng Kong \email{kong0298@umn.edu}
+
+Authors:
+\itemize{
+  \item Jue Hou \email{hou00123@umn.edu}
+  \item Yuming Zhang \email{yumingzhang@hsph.harvard.edu}
+}
 
 }
 \keyword{internal}

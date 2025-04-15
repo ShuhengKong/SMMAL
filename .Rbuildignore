@@ -5,3 +5,4 @@ SMMAL\.Rproj$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^README\.Rmd$

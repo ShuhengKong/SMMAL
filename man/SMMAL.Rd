@@ -13,9 +13,9 @@ SMMAL(N, Y, A, S, X, K = 5, top_n = 1000, cf_model = "bspline")
 
 \item{A}{Numeric vector. Treatment indicator (1 for treated, 0 for control; may include NAs).}
 
-\item{S}{Matrix or data frame. Auxiliary covariates used only in imputation (\eqn{N \times q}).}
+\item{S}{Matrix or data frame. Surrogate used only in imputation.}
 
-\item{X}{Matrix or data frame. Main covariates used for outcome and propensity modeling (\eqn{N \times p}).}
+\item{X}{Matrix or data frame. Main covariates used for outcome and propensity modeling.}
 
 \item{K}{Integer. Number of cross-validation folds. Default is 5.}
 

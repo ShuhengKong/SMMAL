@@ -7,8 +7,8 @@
 #' @param N Integer. Total number of observations.
 #' @param Y Numeric vector. Observed outcomes (may include NAs for unlabelled data).
 #' @param A Numeric vector. Treatment indicator (1 for treated, 0 for control; may include NAs).
-#' @param S Matrix or data frame. Auxiliary covariates used only in imputation (\eqn{N \times q}).
-#' @param X Matrix or data frame. Main covariates used for outcome and propensity modeling (\eqn{N \times p}).
+#' @param S Matrix or data frame. Surrogate used only in imputation.
+#' @param X Matrix or data frame. Main covariates used for outcome and propensity modeling.
 #' @param K Integer. Number of cross-validation folds. Default is 5.
 #' @param top_n Integer. Number of top variables to select using LASSO. Default is 1000.
 #' @param cf_model Character. The modeling method to use in cross-fitting.
