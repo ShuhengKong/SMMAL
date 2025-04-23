@@ -52,7 +52,7 @@ print(output)
 
 ```
 
-## CALDERA input files
+## SMMAL input files
 | Column        | Description |
 | ----------    | ---------- |
 | Y    | Observed outcomes. Can be continuous or binary  |
@@ -63,7 +63,7 @@ print(output)
 | cf_model    | The modeling method to use in cross-fitting. Default is "bspline". Other values are "xgboost","randomforest" |
 
 
-## CALDERA output
+## SMMAL output
 | Column        | Description |
 | ----------    | ---------- |
 | est        | estimated value of ATE |

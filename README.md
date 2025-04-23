@@ -40,12 +40,12 @@ This is a basic example which shows you how to solve a common problem:
     # View the results
     print(output)
     #> $est
-    #> [1] 0.09934698
+    #> [1] 0.09714911
     #> 
     #> $se
-    #> [1] 0.02962668
+    #> [1] 0.02966695
 
-## CALDERA input files
+## SMMAL input files
 
 <table>
 <colgroup>
@@ -87,7 +87,7 @@ Other values are “xgboost”,“randomforest”</td>
 </tbody>
 </table>
 
-## CALDERA output
+## SMMAL output
 
 <table>
 <thead>
