@@ -3,17 +3,17 @@
 
 #' Cross-Fitting with Model Selection and Log Loss Evaluation
 #'
-#' Trains and evaluates a predictive model using cross-fitting across \code{K} folds,
+#' Trains and evaluates a predictive model using cross-fitting across \code{nfold} folds,
 #' supporting multiple learner types. Returns out-of-fold predictions and log loss for each
 #' tuning round to select the best-performing model.
 #'
 #' @param Y Numeric or factor vector. Response variable. Can be binary (0/1) or continuous. Only labelled observations (R = 1) are used.
 #' @param X Matrix or data frame. Covariates used for model training.
-#' @param K Integer. Number of cross-fitting folds.
+#' @param nfold Integer. Number of cross-fitting folds.
 #' @param R Binary vector. 1 indicates labelled data; 0 indicates unlabelled. Used to filter training samples.
 #' @param foldid Integer vector. Fold assignments for cross-fitting (length = full dataset).
 #' @param cf_model Character string. Name of the model to use. One of \code{"xgboost"}, \code{"bspline"}, or \code{"randomforest"}.
-#' @param subset Logical vector. Indicates which samples (among labelled) to include in training. Defaults to all \code{TRUE}.
+#' @param sub_set Logical vector. Indicates which samples (among labelled) to include in training. Defaults to all \code{TRUE}.
 #'
 #' @return A list with:
 #' \describe{
@@ -45,12 +45,15 @@
 
 
 #function role:train and predict with selected model; compute evaluation metric(log loss)
-cf <- function(Y, X, K, R,foldid,cf_model,subset = rep(TRUE, length(Y))) {
+cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y))) {
   labeled_indices <- which(R == 1)
   Y <- Y[labeled_indices]
 
-  foldid_labelled <- numeric(length(Y))
-  foldid_labelled[R == 1] <- foldid[R == 1]
+  foldid_labelled <- foldid[labeled_indices]
+  sub_set <- sub_set[labeled_indices]
+
+  #foldid_labelled <- numeric(length(Y))
+  #foldid_labelled[R == 1] <- foldid[R == 1]
 
   if (is.data.frame(X)) {
     X <- as.matrix(X[labeled_indices, , drop = FALSE])
@@ -72,9 +75,9 @@ cf <- function(Y, X, K, R,foldid,cf_model,subset = rep(TRUE, length(Y))) {
   if(cf_model=="xgboost")
   {
     for (rounds_index in 1:5) {
-      fold_preds <- vector("list", K)
-      for (ifold in 1:K) {
-        trainpos <- which((foldid_labelled != ifold) & subset)
+      fold_preds <- vector("list", nfold)
+      for (ifold in 1:nfold) {
+        trainpos <- which((foldid_labelled != ifold) & sub_set)
         testpos <- which(foldid == ifold)
         X_train <- as.matrix(X[trainpos])
         Y_train <- as.numeric(as.factor(Y[trainpos])) - 1  # Convert to binary 0/1
@@ -115,24 +118,26 @@ cf <- function(Y, X, K, R,foldid,cf_model,subset = rep(TRUE, length(Y))) {
   if(cf_model=="bspline")
   {
     for (rounds_index in 1:5) {
-      fold_preds <- vector("list", K)
-      for (ifold in 1:K) {
-        trainpos <- which((foldid_labelled != ifold) & subset[labeled_indices])
+      fold_preds <- vector("list", nfold)
+      for (ifold in 1:nfold) {
+
+        trainpos <- which((foldid_labelled != ifold) & sub_set[labeled_indices])
         testpos <- which(foldid_labelled == ifold)
         X_train <- as.matrix(X[trainpos])
         Y_train <- as.numeric(Y[trainpos])
         X_test <- as.matrix(X[testpos])
 
-        #一起生成
-        #加完全一样的data
-        # X_train_spline 和 X_test_spline是否一样
+        # Remove rows with missing Y in training
+        valid_idx <- which(!is.na(Y_train))
+        X_train <- X_train[valid_idx, , drop = FALSE]
+        Y_train <- Y_train[valid_idx]
 
         knots <- quantile(as.numeric(X_train), probs = seq(0.1, 0.9, length.out = 1+2*rounds_index))  # Adjust
 
         X_spline <- bSpline(x = as.numeric(c(X_train, X_test)), knots = knots, degree = 1, intercept = TRUE, eps = 1e-5)
 
-        X_train_spline <- X_spline[1:length(X_train), , drop = FALSE]
-        X_test_spline <- X_spline[(length(X_train) + 1):nrow(X_spline), , drop = FALSE]
+        X_train_spline <- X_spline[1:nrow(X_train), , drop = FALSE]
+        X_test_spline <- X_spline[(nrow(X_train) + 1):nrow(X_spline), , drop = FALSE]
 
         cv_model <- cv.glmnet(X_train_spline, Y_train, family = "binomial", alpha = 0)
         best_lambda <- cv_model$lambda.min
@@ -152,10 +157,10 @@ cf <- function(Y, X, K, R,foldid,cf_model,subset = rep(TRUE, length(Y))) {
   if(cf_model=="randomforest")
   {
     for (rounds_index in 1:5) {
-      fold_preds <- vector("list", K)
+      fold_preds <- vector("list", nfold)
 
-      for (ifold in 1:K) {
-        trainpos <- which((foldid_labelled != ifold) & subset)
+      for (ifold in 1:nfold) {
+        trainpos <- which((foldid_labelled != ifold) & sub_set)
         testpos <- which(foldid == ifold)
         X_train <- as.matrix(X[trainpos])
         Y_train <- as.factor(Y[trainpos])  # Ensure Y_train is factor for randomForest
@@ -205,3 +210,4 @@ cf <- function(Y, X, K, R,foldid,cf_model,subset = rep(TRUE, length(Y))) {
     best_rounds_prediction = valid_preds[[best_rounds_index]]
   ))
 }
+

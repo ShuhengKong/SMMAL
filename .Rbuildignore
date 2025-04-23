@@ -6,3 +6,5 @@ SMMAL\.Rproj$
 ^docs$
 ^pkgdown$
 ^README\.Rmd$
+^doc$
+^Meta$

@@ -4,14 +4,14 @@
 \alias{cf}
 \title{Cross-Fitting with Model Selection and Log Loss Evaluation}
 \usage{
-cf(Y, X, K, R, foldid, cf_model, subset = rep(TRUE, length(Y)))
+cf(Y, X, nfold, R, foldid, cf_model, sub_set = rep(TRUE, length(Y)))
 }
 \arguments{
 \item{Y}{Numeric or factor vector. Response variable. Can be binary (0/1) or continuous. Only labelled observations (R = 1) are used.}
 
 \item{X}{Matrix or data frame. Covariates used for model training.}
 
-\item{K}{Integer. Number of cross-fitting folds.}
+\item{nfold}{Integer. Number of cross-fitting folds.}
 
 \item{R}{Binary vector. 1 indicates labelled data; 0 indicates unlabelled. Used to filter training samples.}
 
@@ -19,7 +19,7 @@ cf(Y, X, K, R, foldid, cf_model, subset = rep(TRUE, length(Y)))
 
 \item{cf_model}{Character string. Name of the model to use. One of \code{"xgboost"}, \code{"bspline"}, or \code{"randomforest"}.}
 
-\item{subset}{Logical vector. Indicates which samples (among labelled) to include in training. Defaults to all \code{TRUE}.}
+\item{sub_set}{Logical vector. Indicates which samples (among labelled) to include in training. Defaults to all \code{TRUE}.}
 }
 \value{
 A list with:
@@ -34,7 +34,7 @@ A list with:
 }
 }
 \description{
-Trains and evaluates a predictive model using cross-fitting across \code{K} folds,
+Trains and evaluates a predictive model using cross-fitting across \code{nfold} folds,
 supporting multiple learner types. Returns out-of-fold predictions and log loss for each
 tuning round to select the best-performing model.
 }

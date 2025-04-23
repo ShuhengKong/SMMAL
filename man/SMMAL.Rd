@@ -4,11 +4,9 @@
 \alias{SMMAL}
 \title{Estimate Average Treatment Effect (ATE) via Semi-Supervised Pipeline}
 \usage{
-SMMAL(N, Y, A, S, X, K = 5, top_n = 1000, cf_model = "bspline")
+SMMAL(Y, A, S, X, nfold = 5, cf_model = "bspline")
 }
 \arguments{
-\item{N}{Integer. Total number of observations.}
-
 \item{Y}{Numeric vector. Observed outcomes (may include NAs for unlabelled data).}
 
 \item{A}{Numeric vector. Treatment indicator (1 for treated, 0 for control; may include NAs).}
@@ -17,9 +15,7 @@ SMMAL(N, Y, A, S, X, K = 5, top_n = 1000, cf_model = "bspline")
 
 \item{X}{Matrix or data frame. Main covariates used for outcome and propensity modeling.}
 
-\item{K}{Integer. Number of cross-validation folds. Default is 5.}
-
-\item{top_n}{Integer. Number of top variables to select using LASSO. Default is 1000.}
+\item{nfold}{Integer. Number of cross-validation folds. Default is 5.}
 
 \item{cf_model}{Character. The modeling method to use in cross-fitting.}
 }

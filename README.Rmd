@@ -35,15 +35,15 @@ library(SMMAL)
 file_path <- system.file("extdata", "sample_data.rds", package = "SMMAL")
 dat <- readRDS(file_path)
 
+temp <- data.frame(dat$X)
+temp[,] <- NA
 # Estimate ATE using the SMMAL pipeline
 output <- SMMAL(
-  N = 1000,
   Y = dat$Y,
   A = dat$A,
   S = data.frame(dat$S),
   X = data.frame(dat$X),
-  K = 5,
-  top_n = 5,
+  nfold = 5,
   cf_model = "bspline"
 )
 
@@ -55,13 +55,11 @@ print(output)
 ## CALDERA input files
 | Column        | Description |
 | ----------    | ---------- |
-| N        | total number of observations |
 | Y    | Observed outcomes. Can be continuous or binary  |
 | A       | Treatment indicator. Must be binary |
 | S   | Surrogates |
 | X        | Covariates |
-| K    | Number of cross-validation folds. Default is 5. |
-| top_n        | Number of top covariates to select using LASSO. Default is 1000. |
+| nfold    | Number of cross-validation folds. Default is 5. |
 | cf_model    | The modeling method to use in cross-fitting. Default is "bspline". Other values are "xgboost","randomforest" |
 
 

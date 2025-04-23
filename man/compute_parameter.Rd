@@ -4,10 +4,10 @@
 \alias{compute_parameter}
 \title{Estimate Conditional Expectations and Propensities for Semi-Supervised ATE}
 \usage{
-compute_parameter(K, Y, A, X, S, W, foldid, R, cf_model)
+compute_parameter(nfold, Y, A, X, S, W, foldid, R, cf_model)
 }
 \arguments{
-\item{K}{Integer. Number of cross-fitting folds.}
+\item{nfold}{Integer. Number of cross-fitting folds.}
 
 \item{Y}{Numeric vector. Outcome variable (can contain NAs for unlabelled data).}
 

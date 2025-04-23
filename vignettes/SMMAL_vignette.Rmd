@@ -14,11 +14,29 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(SMMAL)
-file_path <- system.file("extdata", "sample_data.rds", package = "SMMAL")
-dat <- readRDS(file_path)
 
+Introduction
+
+This vignette demonstrates how to use the SMMAL package to estimate the Average Treatment Effect (ATE) using semi-supervised machine learning. We provide an example dataset and walk through the required input format and function usage.
+
+
+Import Sample data. 
+
+Sample data contain 1000 observations with 60% of Y and A missing at random.
+This package can handle datasets with a high proportion of missing values, but it requires a sufficiently large sample size to ensure that each fold in cross-validation contains at least 20 labeled observations.
+
+```{r}
+library(SMMAL)
+
+file_path <- system.file("extdata", "sample_data_withmissing.rds", package = "SMMAL")
+dat <- readRDS(file_path)
+```
+
+
+Input file S and X needs to be data frame, even if they are vectors.
+
+
+```{r}
   # Y and A are numeric vector 
   Y <- dat$Y
   A <- dat$A
@@ -26,7 +44,28 @@ dat <- readRDS(file_path)
   # S and X needs to be data frame
   S <- data.frame(dat$S)
   X <- data.frame(dat$X)
+``` 
 
-SMMAL_output <- SMMAL(N=1000,Y=Y,A=A,S=S,X=X,K=5,top_n=5)
-print(SMMAL_output)
+
+Estimate ATE with SMMAL & Output
+If no cf_model is indicated, the default value is "bspline".
+If no nfold is indicated, the default value is 5.
+  
+```{r}
+SMMAL_output1 <- SMMAL(Y=Y,A=A,S=S,X=X)
+print(SMMAL_output1)
+```
+
+Other options for cf_model are "xgboost" 
+  
+```{r}
+SMMAL_output2 <- SMMAL(Y=Y,A=A,S=S,X=X,cf_model= "xgboost")
+print(SMMAL_output2)
+```
+
+or "randomforest"
+
+```{r}
+SMMAL_output3 <- SMMAL(Y=Y,A=A,S=S,X=X,cf_model= "randomforest")
+print(SMMAL_output3)
 ```

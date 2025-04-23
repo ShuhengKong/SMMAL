@@ -4,14 +4,16 @@
 \alias{cross_validation}
 \title{Assign Cross-Validation Folds for Labelled and Unlabelled Data}
 \usage{
-cross_validation(N, K, A)
+cross_validation(N, nfold, A, Y)
 }
 \arguments{
 \item{N}{Integer. Total number of observations in the dataset.}
 
-\item{K}{Integer. Number of folds to assign for cross-validation.}
+\item{nfold}{Integer. Number of folds to assign for cross-validation.}
 
-\item{A}{Vector. Treatment assignment vector, may contain \code{NA} for unlabelled samples.}
+\item{A}{Numeric Vector. Treatment assignment vector, may contain \code{NA} for unlabelled samples.}
+
+\item{Y}{Numeric vector. Observed outcomes (may include NAs for unlabelled data).}
 }
 \value{
 A list containing:

@@ -4,8 +4,9 @@
 #' ensuring an approximately equal number of samples per fold within each group.
 #'
 #' @param N Integer. Total number of observations in the dataset.
-#' @param K Integer. Number of folds to assign for cross-validation.
-#' @param A Vector. Treatment assignment vector, may contain \code{NA} for unlabelled samples.
+#' @param nfold Integer. Number of folds to assign for cross-validation.
+#' @param A Numeric Vector. Treatment assignment vector, may contain \code{NA} for unlabelled samples.
+#' @param Y Numeric vector. Observed outcomes (may include NAs for unlabelled data).
 #'
 #' @return A list containing:
 #' \describe{
@@ -22,16 +23,16 @@
 #'
 
 #function role:cross_validation
-cross_validation <- function(N,K,A){
+cross_validation <- function(N,nfold,A,Y){
   # Create the vector with 1 for non-missing values and 0 for missing values
-  R <- ifelse(!is.na(A), 1, 0)
+  R <- ifelse(!is.na(A)& !is.na(Y), 1, 0)
 
   labelled_indices <- which(R == 1)
   unlabelled_indices <- which(R == 0)
 
   #make sure each fold has same ratio of labelled data
-  foldid_labelled_values <- sample(rep_len(1:K, length.out = length(labelled_indices)))
-  foldid_unlabelled_values <- sample(rep_len(1:K, length.out = length(unlabelled_indices)))
+  foldid_labelled_values <- sample(rep_len(1:nfold, length.out = length(labelled_indices)))
+  foldid_unlabelled_values <- sample(rep_len(1:nfold, length.out = length(unlabelled_indices)))
 
   foldid <- numeric(N)
   foldid_labelled <- numeric(N)

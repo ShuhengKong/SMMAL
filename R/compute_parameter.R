@@ -5,7 +5,7 @@
 #' using cross-fitting for both labelled and unlabelled data. This function is central
 #' for ATE estimation under semi-supervised or doubly robust frameworks.
 #'
-#' @param K Integer. Number of cross-fitting folds.
+#' @param nfold Integer. Number of cross-fitting folds.
 #' @param Y Numeric vector. Outcome variable (can contain NAs for unlabelled data).
 #' @param A Numeric vector. Treatment assignment (0 or 1, can contain NAs).
 #' @param X Matrix or data frame. Covariates used for outcome and propensity estimation.
@@ -31,21 +31,20 @@
 
 
 
-compute_parameter <- function(K,Y,A,X,S,W,foldid,R,cf_model){
+compute_parameter <- function(nfold,Y,A,X,S,W,foldid,R,cf_model){
 
-  mu1.bs = cf(Y, X, K, R,foldid,cf_model,subset=A==1)
+  mu1.bs = cf(Y, X, nfold, R,foldid,cf_model,sub_set=A==1)
 
-  mu0.bs = cf(Y, X, K, R,foldid,cf_model,subset=A==0)
+  mu0.bs = cf(Y, X, nfold, R,foldid,cf_model,sub_set=A==0)
 
 
-  pi1.bs = cf(A, X, K, R,foldid,cf_model)
-
+  pi1.bs = cf(A, X, nfold, R,foldid,cf_model)
   # cap_pi1
-  imp.A.bs = cf(A, W, K, R,foldid,cf_model)
+  imp.A.bs = cf(A, W, nfold, R,foldid,cf_model)
   # m1
-  imp.A1Y1.bs = cf(Y, W, K, R, foldid,cf_model,subset = A==1)
+  imp.A1Y1.bs = cf(Y, W, nfold, R, foldid,cf_model,sub_set = A==1)
   # m0
-  imp.A0Y1.bs = cf(Y, W, K, R, foldid,cf_model,subset = A==0)
+  imp.A0Y1.bs = cf(Y, W, nfold, R, foldid,cf_model,sub_set = A==0)
 
 
   return(list(pi1.bs=pi1.bs$best_rounds_prediction,pi0.bs=1-pi1.bs$best_rounds_prediction,mu1.bs=mu1.bs$best_rounds_prediction,mu0.bs=mu0.bs$best_rounds_prediction,cap_pi1.bs=imp.A.bs$best_rounds_prediction,cap_pi0.bs=1-imp.A.bs$best_rounds_prediction, m1.bs=imp.A1Y1.bs$best_rounds_prediction, m0.bs=imp.A0Y1.bs$best_rounds_prediction))
