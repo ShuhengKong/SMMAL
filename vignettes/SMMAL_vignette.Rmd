@@ -22,7 +22,9 @@ This vignette demonstrates how to use the SMMAL package to estimate the Average 
 
 Import Sample data. 
 
-Sample data contain 1000 observations with 60% of Y and A missing at random.
+Sample data contain 1000 observations with 60% of Y and A missing at random. 
+Y is the outcome. A is the treatment indicator. X are the covariates. S are the surrogates.
+For the sample data, missingness occurs at random and is encoded as NA.
 This package can handle datasets with a high proportion of missing values, but it requires a sufficiently large sample size to ensure that each fold in cross-validation contains at least 20 labeled observations.
 
 ```{r}
@@ -48,7 +50,12 @@ Input file S and X needs to be data frame, even if they are vectors.
 
 
 Estimate ATE with SMMAL & Output
+
+Users can choose which model to use for the nuisance functions by setting the cf_model parameter.
 If no cf_model is indicated, the default value is "bspline".
+
+After cross-validation and prediction, the best-performing model is selected based on the lowest cross-entropy (log loss).
+Users can control how many folds are used in cross-validation by setting the nfold parameter.
 If no nfold is indicated, the default value is 5.
   
 ```{r}
@@ -69,3 +76,57 @@ or "randomforest"
 SMMAL_output3 <- SMMAL(Y=Y,A=A,S=S,X=X,cf_model= "randomforest")
 print(SMMAL_output3)
 ```
+
+
+Users may also replce some of the built in function by their own choice. 
+Take the function ada_lasso as an example.
+
+
+The ada_lasso function takes X (covariates) and Y (outcome) as input and selects the most predictive covariates for Y.
+If X is a vector, a logistic regression (glm) is used to determine whether the covariate should be retained.
+If no covariates are selected, the function returns NULL.
+Downstream functions in the package are designed to detect a NULL return and will halt execution with an error message indicating that X must be a non-empty data frame.
+
+
+Below, we demonstrate the output of the ada_lasso() function.
+
+When data frame X has multiple columns.
+
+```{r}
+SMMAL_output4 <- ada_lasso(Y=Y,X=X)
+str(SMMAL_output4)
+```
+
+The ada_lasso() function returns a reduced version of the input covariate matrix X, containing only the variables that are predictive of the outcome Y, as determined by adaptive LASSO or a univariate logistic regression test.
+
+Below, we demonstrate the output when no no covariates was selected.
+
+```{r}
+SMMAL_output5 <- ada_lasso(Y=Y,X=X[, 1:2, drop = FALSE])
+print(SMMAL_output5)
+```
+
+In this case, the output is a single NULL value, indicating that no covariates were selected.
+
+
+
+When data frame X has only multiple column.
+The ada_lasso() function uses a univariate logistic regression test when the input X is a single-column data frame (i.e., a vector of covariates). 
+If the test finds that the covariate is not statistically significant (p-value ≥ 0.05), the function determines that the covariate should not be retained.
+
+```{r}
+SMMAL_output6 <- ada_lasso(Y=Y,X=X[, 8, drop = FALSE])
+str(SMMAL_output6)
+```
+
+In this case, the output is the covariate itself.
+
+
+```{r}
+SMMAL_output7 <- ada_lasso(Y=Y,X=X[, 1, drop = FALSE])
+print(SMMAL_output7)
+```
+
+In this case, the output is a single NULL value, indicating that no covariate was selected.
+
+

@@ -27,10 +27,9 @@ SMMAL <- function(Y, A, S, X, nfold = 5, cf_model = "bspline") {
   if (any(is.na(Y) != is.na(A))) {
     warning("Each element of Y and A must be either both missing or both observed.")
   }
-  if(ncol(X)>=2)
-  {
+
   X <- ada_lasso(X, Y)
-  }
+
 
   if (is.null(X) || ncol(X) == 0) {
     stop("Error: 'X' must be a non-empty data frame.")
