@@ -3,7 +3,7 @@ Title: Semi-Supervised Estimation of Average Treatment Effects
 Version: 0.0.1
 Authors@R: 
     c(
-      person("Jue", "Hou", email = "hou00123@umn.edu", role = "aut"),
+      person("Jue", "Hou", email = "hou00123@umn.edu", role = c("aut", "cre")),
       person("Yuming", "Zhang", email = "yumingzhang@hsph.harvard.edu", role = "aut"),
       person("Shuheng", "Kong", email = "kong0298@umn.edu", role = c("aut", "cre"))
     )
