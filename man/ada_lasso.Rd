@@ -2,20 +2,51 @@
 % Please edit documentation in R/ada_lasso.R
 \name{ada_lasso}
 \alias{ada_lasso}
-\title{Variable Selection Using LASSO}
+\title{Variable Selection Using Adaptive LASSO}
 \usage{
 ada_lasso(X, Y)
 }
 \arguments{
 \item{X}{A data frame or matrix of predictor variables.}
 
-\item{Y}{A response vector (binary outcome: 0/1).}
+\item{Y}{A response vector (binary outcome: 0 or 1), possibly containing missing values.}
 }
 \value{
-A matrix containing only the \code{top_n} selected variables (columns) from the original predictor matrix \code{X}.
+A matrix containing the selected columns of \code{X} corresponding to important predictors.
+If no variables are selected, the function returns \code{NULL}.
 }
 \description{
-This function performs variable selection using LASSO (Least Absolute Shrinkage and Selection Operator)
-via cross-validated logistic regression (using \code{glmnet}). It returns the top \code{n} most important predictors
-based on the absolute value of the LASSO coefficients.
+Performs variable selection using the adaptive LASSO (Least Absolute Shrinkage and Selection Operator)
+via cross-validated logistic regression with \code{glmnet}. The function selects important predictors
+based on the nonzero coefficients from the adaptive LASSO fit.
+}
+\details{
+If only a single predictor is provided, a univariate logistic regression is performed using \code{glm}.
+The predictor is selected if its p-value is below 0.05.
+}
+\examples{
+set.seed(123)
+n <- 100
+p <- 10
+
+# Generate predictors
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+
+# True model: only variables 1 and 3 affect Y
+beta <- c(1.5, 0, -2, rep(0, p - 3))
+logits <- X \%*\% beta
+probs <- 1 / (1 + exp(-logits))
+
+# Generate binary outcomes
+Y <- rbinom(n, size = 1, prob = probs)
+
+# Apply ada_lasso
+selected_X <- ada_lasso(X, Y)
+
+if (!is.null(selected_X)) {
+  print(dim(selected_X))  # Show dimensions of selected variables
+} else {
+  print("No variables selected.")
+}
+
 }

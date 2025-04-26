@@ -5,24 +5,39 @@
 #'
 #' @param N Integer. Total number of observations in the dataset.
 #' @param nfold Integer. Number of folds to assign for cross-validation.
-#' @param A Numeric Vector. Treatment assignment vector, may contain \code{NA} for unlabelled samples.
-#' @param Y Numeric vector. Observed outcomes (may include NAs for unlabelled data).
+#' @param A Numeric vector. Treatment assignment indicator (may contain \code{NA} for unlabelled samples).
+#' @param Y Numeric vector. Outcome variable (may contain \code{NA} for unlabelled samples).
 #'
 #' @return A list containing:
 #' \describe{
-#'   \item{R}{Binary vector of length \code{N}. 1 indicates labelled data (non-missing \code{A}), 0 indicates unlabelled data.}
-#'   \item{foldid}{Integer vector of length \code{N}. Fold assignments (1 to \code{K}) for each observation, for use in cross-validation.}
+#'   \item{R}{Binary vector of length \code{N}, where 1 indicates labelled observations (non-missing \code{A} and \code{Y}),
+#'   and 0 indicates unlabelled observations.}
+#'   \item{foldid}{Integer vector of length \code{N}. Fold assignments (from 1 to \code{nfold}) for use in cross-validation.}
 #' }
 #'
 #' @details
-#' This function supports semi-supervised learning workflows by separating observations into labelled and unlabelled groups
-#' based on the presence of treatment labels (\code{A}). It assigns fold indices for both groups independently, allowing
-#' balanced cross-fitting or validation strategies within each subgroup.
+#' The function first separates observations into labelled and unlabelled groups based on the
+#' availability of both treatment (\code{A}) and outcome (\code{Y}). Within each group,
+#' fold assignments are randomly assigned to ensure approximately balanced sample sizes
+#' across folds. This setup supports semi-supervised learning workflows by maintaining
+#' structure between labelled and unlabelled data during cross-fitting.
+#'
+#' @examples
+#' set.seed(123)
+#' N <- 100
+#' A <- sample(c(0, 1, NA), size = N, replace = TRUE, prob = c(0.45, 0.45, 0.10))
+#' Y <- sample(c(0, 1, NA), size = N, replace = TRUE, prob = c(0.45, 0.45, 0.10))
+#'
+#' # Assign 5 folds for cross-fitting
+#' result <- cross_validation(N = N, nfold = 5, A = A, Y = Y)
+#'
+#' table(result$R)  # Check number of labelled vs unlabelled
+#' table(result$foldid)  # Check how folds are distributed
+#'
 #'
 #' @export
-#'
 
-#function role:cross_validation
+
 cross_validation <- function(N,nfold,A,Y){
   # Create the vector with 1 for non-missing values and 0 for missing values
   R <- ifelse(!is.na(A)& !is.na(Y), 1, 0)

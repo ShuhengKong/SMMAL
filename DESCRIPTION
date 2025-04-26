@@ -3,15 +3,16 @@ Title: Semi-Supervised Estimation of Average Treatment Effects
 Version: 0.0.1
 Authors@R: 
     c(
-      person("Jue", "Hou", email = "hou00123@umn.edu", role = c("aut", "cre")),
-      person("Yuming", "Zhang", email = "yumingzhang@hsph.harvard.edu", role = "aut"),
-      person("Shuheng", "Kong", email = "kong0298@umn.edu", role = c("aut", "cre"))
+      person(given = "Jue", family = "Hou", email = "hou00123@umn.edu", role = c("aut", "cre")),
+      person(given = "Yuming", family = "Zhang", email = "yumingzhang@hsph.harvard.edu", role = "aut"),
+      person(given = "Shuheng", family = "Kong", email = "kong0298@umn.edu", role = "aut")
     )
-Description: Provides a pipeline for estimating the average treatment effect (ATE) using 
+Description: 
+    Provides a pipeline for estimating the average treatment effect (ATE) using 
     semi-supervised learning methods. Includes variable selection via LASSO, flexible outcome 
-    modeling using cross-fitting with options such as xgboost, random forest, and B-splines, 
-    and a doubly robust ATE estimation using both labeled and unlabeled data. Includes 
-    vignette-based documentation.
+    modeling using cross-fitting with options such as XGBoost, random forest, and B-splines, 
+    and doubly robust ATE estimation leveraging both labeled and unlabeled data. Vignette-based 
+    documentation is included.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

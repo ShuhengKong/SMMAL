@@ -1,17 +1,48 @@
-#' Variable Selection Using LASSO
+#' Variable Selection Using Adaptive LASSO
 #'
-#' This function performs variable selection using LASSO (Least Absolute Shrinkage and Selection Operator)
-#' via cross-validated logistic regression (using `glmnet`). It returns the top `n` most important predictors
-#' based on the absolute value of the LASSO coefficients.
+#' Performs variable selection using the adaptive LASSO (Least Absolute Shrinkage and Selection Operator)
+#' via cross-validated logistic regression with \code{glmnet}. The function selects important predictors
+#' based on the nonzero coefficients from the adaptive LASSO fit.
+#'
+#' If only a single predictor is provided, a univariate logistic regression is performed using \code{glm}.
+#' The predictor is selected if its p-value is below 0.05.
 #'
 #' @param X A data frame or matrix of predictor variables.
-#' @param Y A response vector (binary outcome: 0/1).
+#' @param Y A response vector (binary outcome: 0 or 1), possibly containing missing values.
 #'
-#' @return A matrix containing only the `top_n` selected variables (columns) from the original predictor matrix `X`.
+#' @return A matrix containing the selected columns of \code{X} corresponding to important predictors.
+#' If no variables are selected, the function returns \code{NULL}.
 #'
 #' @import glmnet
 #' @importFrom stats glm binomial
+#'
+#' @examples
+#' set.seed(123)
+#' n <- 100
+#' p <- 10
+#'
+#' # Generate predictors
+#' X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+#'
+#' # True model: only variables 1 and 3 affect Y
+#' beta <- c(1.5, 0, -2, rep(0, p - 3))
+#' logits <- X %*% beta
+#' probs <- 1 / (1 + exp(-logits))
+#'
+#' # Generate binary outcomes
+#' Y <- rbinom(n, size = 1, prob = probs)
+#'
+#' # Apply ada_lasso
+#' selected_X <- ada_lasso(X, Y)
+#'
+#' if (!is.null(selected_X)) {
+#'   print(dim(selected_X))  # Show dimensions of selected variables
+#' } else {
+#'   print("No variables selected.")
+#' }
+#'
 #' @export
+
 ada_lasso <- function(X, Y) {
   observed_idx <- which(!is.na(Y))
   X_obs <- X[observed_idx, , drop = FALSE]
@@ -22,11 +53,11 @@ ada_lasso <- function(X, Y) {
     # Use glm to assess univariate predictor
     df <- data.frame(x = X_obs[, 1], y = Y_obs)
     fit <- glm(y ~ x, data = df, family = binomial())
-    pval <- summary(fit)$coefficients[2, 4]  # p-value for 'x'
+    pval <- summary(fit)$coefficients[2, 4]
 
     # Keep if significant at 0.05 level
     if (pval < 0.05) {
-      return(X[, , drop = FALSE])  # keep the only column
+      return(X[, , drop = FALSE])
     } else {
       return(NULL)
     }

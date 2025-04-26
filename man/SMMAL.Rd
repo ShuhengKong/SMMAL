@@ -2,32 +2,42 @@
 % Please edit documentation in R/SMMAL.R
 \name{SMMAL}
 \alias{SMMAL}
-\title{Estimate Average Treatment Effect (ATE) via Semi-Supervised Pipeline}
+\title{Estimate Average Treatment Effect (ATE) via Semi-Supervised Learning Pipeline}
 \usage{
 SMMAL(Y, A, S, X, nfold = 5, cf_model = "bspline")
 }
 \arguments{
-\item{Y}{Numeric vector. Observed outcomes (may include NAs for unlabelled data).}
+\item{Y}{Numeric vector. Outcome variable (may contain \code{NA} for unlabelled observations).}
 
-\item{A}{Numeric vector. Treatment indicator (1 for treated, 0 for control; may include NAs).}
+\item{A}{Numeric vector. Treatment indicator (1 = treated, 0 = control). May contain \code{NA} for unlabelled observations.}
 
-\item{S}{Matrix or data frame. Surrogate used only in imputation.}
+\item{S}{Matrix or data frame. Surrogate variables used only in imputation models.}
 
-\item{X}{Matrix or data frame. Main covariates used for outcome and propensity modeling.}
+\item{X}{Matrix or data frame. Main covariates used for outcome and propensity score modeling.}
 
 \item{nfold}{Integer. Number of cross-validation folds. Default is 5.}
 
-\item{cf_model}{Character. The modeling method to use in cross-fitting.}
+\item{cf_model}{Character string. Modeling method to use in cross-fitting. One of \code{"bspline"}, \code{"xgboost"}, or \code{"randomforest"}. Default is "bspline".}
 }
 \value{
 A list containing:
 \describe{
 \item{est}{Estimated Average Treatment Effect (ATE).}
-\item{se}{Standard error of the ATE estimate.}
+\item{se}{Estimated standard error of the ATE.}
 }
 }
 \description{
-Executes the full ATE estimation pipeline using a semi-supervised learning approach.
-This includes cross-validation fold assignment, model fitting using a chosen learner (e.g., xgboost),
-and doubly robust ATE estimation using both labelled and unlabelled data.
+Executes a full semi-supervised ATE estimation pipeline. This includes cross-validation
+fold assignment, feature selection via adaptive LASSO, model fitting using a specified learner
+(e.g., bspline, xgboost, or random forest), and doubly robust ATE estimation
+that leverages both labelled and unlabelled data.
+}
+\details{
+The pipeline first selects important covariates via adaptive LASSO. Then, it fits nuisance functions
+(outcome regressions and propensity scores) using cross-fitting with the specified learner.
+Finally, it applies a doubly robust estimator that integrates information from both labelled and
+unlabelled observations to estimate the ATE.
+}
+\seealso{
+\code{\link{cf}}, \code{\link{compute_parameter}}, \code{\link{cross_validation}}, \code{\link{ate.SSL}}
 }

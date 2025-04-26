@@ -1,34 +1,39 @@
-
-#' Estimate Conditional Expectations and Propensities for Semi-Supervised ATE
+#' Estimate Nuisance Parameters for Semi-Supervised ATE Estimation
 #'
-#' Computes nuisance parameters such as conditional expectations and propensity scores
-#' using cross-fitting for both labelled and unlabelled data. This function is central
-#' for ATE estimation under semi-supervised or doubly robust frameworks.
+#' Computes nuisance functions including conditional expectations and propensity scores
+#' using cross-fitting, separately for labelled and unlabelled data. These estimates
+#' are essential inputs for doubly robust or semi-supervised average treatment effect (ATE) estimators.
 #'
 #' @param nfold Integer. Number of cross-fitting folds.
-#' @param Y Numeric vector. Outcome variable (can contain NAs for unlabelled data).
-#' @param A Numeric vector. Treatment assignment (0 or 1, can contain NAs).
-#' @param X Matrix or data frame. Covariates used for outcome and propensity estimation.
-#' @param S Matrix or data frame. Additional covariates only used in imputation models.
-#' @param W Matrix or data frame. Combination of X and S.
+#' @param Y Numeric vector. Outcome variable. Can contain \code{NA}s for unlabelled observations.
+#' @param A Numeric vector. Treatment assignment indicator (0 or 1). Can contain \code{NA}s.
+#' @param X Matrix or data frame. Covariates used for outcome and propensity score models.
+#' @param S Matrix or data frame. Additional covariates used only in imputation models.
+#' @param W Matrix or data frame. Combined set of covariates (typically \code{cbind(X, S)}).
 #' @param foldid Integer vector. Fold assignments for cross-fitting.
-#' @param R Binary vector. 1 indicates labelled data (non-missing A and Y), 0 indicates unlabelled.
-#' @param cf_model Function. Cross-fitting wrapper function, e.g., using Super Learner or another learner.
+#' @param R Binary vector. Label indicator: 1 = labelled (observed \code{A} and \code{Y}), 0 = unlabelled.
+#' @param cf_model Function. A user-supplied cross-fitting wrapper function (e.g., based on Super Learner or other learners).
 #'
-#' @return A list containing estimated nuisance parameters (each is a vector):
+#' @return A named list of estimated nuisance parameters (each a numeric vector):
 #' \describe{
-#'   \item{pi1.bs}{Estimated propensity score \eqn{P(A = 1 | X)}}
-#'   \item{pi0.bs}{Estimated propensity score \eqn{P(A = 0 | X)} = 1 - pi1.bs}
-#'   \item{mu1.bs}{Estimated outcome regression \eqn{E[Y | A = 1, X]}}
-#'   \item{mu0.bs}{Estimated outcome regression \eqn{E[Y | A = 0, X]}}
-#'   \item{cap_pi1.bs}{Estimated imputed propensity score \eqn{P(A = 1 | W)}}
-#'   \item{cap_pi0.bs}{Estimated imputed propensity score \eqn{P(A = 0 | W)} = 1 - cap_pi1.bs}
-#'   \item{m1.bs}{Estimated imputed outcome regression \eqn{E[Y | A = 1, W]}}
-#'   \item{m0.bs}{Estimated imputed outcome regression \eqn{E[Y | A = 0, W]}}
+#'   \item{pi1.bs}{Estimated propensity score \eqn{P(A = 1 \mid X)}.}
+#'   \item{pi0.bs}{Estimated propensity score \eqn{P(A = 0 \mid X)} (computed as \code{1 - pi1.bs}).}
+#'   \item{mu1.bs}{Estimated outcome regression \eqn{E[Y \mid A = 1, X]}.}
+#'   \item{mu0.bs}{Estimated outcome regression \eqn{E[Y \mid A = 0, X]}.}
+#'   \item{cap_pi1.bs}{Estimated imputed propensity score \eqn{P(A = 1 \mid W)}.}
+#'   \item{cap_pi0.bs}{Estimated imputed propensity score \eqn{P(A = 0 \mid W)} (computed as \code{1 - cap_pi1.bs}).}
+#'   \item{m1.bs}{Estimated imputed outcome regression \eqn{E[Y \mid A = 1, W]}.}
+#'   \item{m0.bs}{Estimated imputed outcome regression \eqn{E[Y \mid A = 0, W]}.}
 #' }
+#'
+#' @details
+#' This function applies cross-fitting to estimate all required nuisance functions for
+#' semi-supervised or doubly robust ATE estimators. Separate models are fit for the
+#' labelled dataset and the full dataset (for imputation).
+#'
+#' @seealso \code{\link{cf}}
+#'
 #' @export
-
-
 
 
 compute_parameter <- function(nfold,Y,A,X,S,W,foldid,R,cf_model){

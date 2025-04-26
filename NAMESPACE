@@ -2,10 +2,8 @@
 
 export(SMMAL)
 export(ada_lasso)
-export(ate.SL)
 export(ate.SSL)
 export(cf)
-export(compute_logloss)
 export(compute_parameter)
 export(cross_validation)
 import(glmnet)
