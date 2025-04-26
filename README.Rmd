@@ -14,13 +14,16 @@ knitr::opts_chunk$set(
 
 # SMMAL
 
-<!-- badges: start -->
-<!-- badges: end -->
-
 SMMAL is an R package for estimating the Average Treatment Effect (ATE) using semi-supervised learning (SSL), tailored for settings with limited treatment/outcome labels but rich covariates and surrogate variables. It enhances efficiency and robustness over supervised methods by leveraging unlabeled data and supports high-dimensional models via cross-fitting, flexible model fitting, and adaptive LASSO.
 
 
 ## Installation
+
+```{r, eval=FALSE}
+# install.packages("devtools")
+devtools::install_github("ShuhengKong/SMMAL")
+```
+
 
 A github version can be found at this link: https://github.com/ShuhengKong/SMMAL
 
@@ -54,7 +57,7 @@ print(output)
 
 ## SMMAL input files
 | Column        | Description |
-| ----------    | ---------- |
+| :----------    | :---------- |
 | Y    | Observed outcomes. Can be continuous or binary  |
 | A       | Treatment indicator. Must be binary |
 | S   | Surrogates |
@@ -65,7 +68,7 @@ print(output)
 
 ## SMMAL output
 | Column        | Description |
-| ----------    | ---------- |
+| :----------    | :---------- |
 | est        | estimated value of ATE |
 | se    | standard error of ATE |
 
