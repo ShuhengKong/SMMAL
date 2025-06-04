@@ -44,10 +44,10 @@ output <- SMMAL(
 # View the results
 print(output)
 #> $est
-#> [1] 0.09971294
+#> [1] 0.1021349
 #> 
 #> $se
-#> [1] 0.0296998
+#> [1] 0.03006258
 ```
 
 ## SMMAL input files
@@ -60,6 +60,7 @@ print(output)
 | X | Covariates |
 | nfold | Number of cross-validation folds. Default is 5. |
 | cf_model | The modeling method to use in cross-fitting. Default is “bspline”. Other values are “xgboost”,“randomforest” |
+| custom_model_fun | Optional user-supplied function for feature selection or prediction. Overrides the built-in model fitting. Must return fold-level predictions. |
 
 ## SMMAL output
 
