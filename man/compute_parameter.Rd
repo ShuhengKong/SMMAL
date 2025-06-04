@@ -4,7 +4,7 @@
 \alias{compute_parameter}
 \title{Estimate Nuisance Parameters for Semi-Supervised ATE Estimation}
 \usage{
-compute_parameter(nfold, Y, A, X, S, W, foldid, R, cf_model)
+compute_parameter(nfold, Y, A, X, S, W, foldid, R, cf_model, custom_model_fun)
 }
 \arguments{
 \item{nfold}{Integer. Number of cross-fitting folds.}
@@ -24,6 +24,8 @@ compute_parameter(nfold, Y, A, X, S, W, foldid, R, cf_model)
 \item{R}{Binary vector. Label indicator: 1 = labelled (observed \code{A} and \code{Y}), 0 = unlabelled.}
 
 \item{cf_model}{Function. A user-supplied cross-fitting wrapper function (e.g., based on Super Learner or other learners).}
+
+\item{custom_model_fun}{A logical or function. If \code{NULL} or \code{FALSE}, bypasses adaptive-LASSO feature selection. Otherwise, enables two-stage tuning inside \code{compute_parameter()}.}
 }
 \value{
 A named list of estimated nuisance parameters (each a numeric vector):

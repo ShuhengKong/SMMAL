@@ -15,15 +15,19 @@ knitr::opts_chunk$set(
 ```
 
 
-Introduction
+## Introduction
 
 This vignette demonstrates how to use the SMMAL package to estimate the Average Treatment Effect (ATE) using semi-supervised machine learning. We provide an example dataset and walk through the required input format and function usage.
 
 
-Import Sample data. 
+## Import Sample data. 
 
 Sample data contain 1000 observations with 60% of Y and A missing at random. 
-Y is the outcome. A is the treatment indicator. X are the covariates. S are the surrogates.
+Y is the outcome. 
+A is the treatment indicator. 
+X are the covariates. 
+S are the surrogates.
+
 For the sample data, missingness occurs at random and is encoded as NA.
 This package can handle datasets with a high proportion of missing values, but it requires a sufficiently large sample size to ensure that each fold in cross-validation contains at least 20 labeled observations.
 
@@ -34,6 +38,7 @@ file_path <- system.file("extdata", "sample_data_withmissing.rds", package = "SM
 dat <- readRDS(file_path)
 ```
 
+## Prepare Inputs
 
 Input file S and X needs to be data frame, even if they are vectors.
 
@@ -49,7 +54,7 @@ Input file S and X needs to be data frame, even if they are vectors.
 ``` 
 
 
-Estimate ATE with SMMAL & Output
+## Estimate ATE with SMMAL & Output
 
 Users can choose which model to use for the nuisance functions by setting the cf_model parameter.
 If no cf_model is indicated, the default value is "bspline".
@@ -59,8 +64,8 @@ Users can control how many folds are used in cross-validation by setting the nfo
 If no nfold is indicated, the default value is 5.
   
 ```{r}
-SMMAL_output1 <- SMMAL(Y=Y,A=A,S=S,X=X)
-print(SMMAL_output1)
+ SMMAL_output1 <- SMMAL(Y=Y,A=A,S=S,X=X)
+ print(SMMAL_output1)
 ```
 
 Other options for cf_model are "xgboost" 
@@ -70,7 +75,7 @@ SMMAL_output2 <- SMMAL(Y=Y,A=A,S=S,X=X,cf_model= "xgboost")
 print(SMMAL_output2)
 ```
 
-or "randomforest"
+or "random forest"
 
 ```{r}
 SMMAL_output3 <- SMMAL(Y=Y,A=A,S=S,X=X,cf_model= "randomforest")
@@ -78,55 +83,28 @@ print(SMMAL_output3)
 ```
 
 
-Users may also replce some of the built in function by their own choice. 
-Take the function ada_lasso as an example.
+## Using Your Own custom_model_fun
 
+Users may customize the feature‐selection or penalization strategy by supplying their own function through the custom_model_fun argument. To do so, pass a function that meets these requirements:
 
-The ada_lasso function takes X (covariates) and Y (outcome) as input and selects the most predictive covariates for Y.
-If X is a vector, a logistic regression (glm) is used to determine whether the covariate should be retained.
-If no covariates are selected, the function returns NULL.
-Downstream functions in the package are designed to detect a NULL return and will halt execution with an error message indicating that X must be a non-empty data frame.
+1. Function Signature
+It must accept exactly these arguments (in this order):
+X, Y, foldid_labelled, sub_set, labeled_indices, nfold, log_loss
 
+(X, Y, foldid_labelled, sub_set, labeled_indices, and nfold are used internally by SMMAL to partition and fit the data.)
 
-Below, we demonstrate the output of the ada_lasso() function.
+(log_loss is a function for computing cross‐entropy (log‐loss). Your function should call log_loss(true_labels, predicted_probs) to evaluate each tuning parameter.)
 
-When data frame X has multiple columns.
+2. Return Value
+It must return a list of length equal to the number of “ridge” penalty values defined in param_fun(). Each element of that list should be a numeric vector of length n containing out‐of‐fold predicted probabilities for all observations—i.e., it should stack together predictions from every held‐out fold (no NA values, except where Y is genuinely missing).
 
-```{r}
-SMMAL_output4 <- ada_lasso(Y=Y,X=X)
-str(SMMAL_output4)
-```
-
-The ada_lasso() function returns a reduced version of the input covariate matrix X, containing only the variables that are predictive of the outcome Y, as determined by adaptive LASSO or a univariate logistic regression test.
-
-Below, we demonstrate the output when no no covariates was selected.
+Below is an example showing how to plug in the packaged ada_lasso() as custom_model_fun. In practice, you could substitute any function with the same signature and return type:
 
 ```{r}
-SMMAL_output5 <- ada_lasso(Y=Y,X=X[, 1:2, drop = FALSE])
-print(SMMAL_output5)
+ SMMAL_output4 <- SMMAL(Y=Y,A=A,S=S,X=X, custom_model_fun = ada_lasso)
+ print(SMMAL_output4)
 ```
 
-In this case, the output is a single NULL value, indicating that no covariates were selected.
 
-
-
-When data frame X has only multiple column.
-The ada_lasso() function uses a univariate logistic regression test when the input X is a single-column data frame (i.e., a vector of covariates). 
-If the test finds that the covariate is not statistically significant (p-value ≥ 0.05), the function determines that the covariate should not be retained.
-
-```{r}
-SMMAL_output6 <- ada_lasso(Y=Y,X=X[, 8, drop = FALSE])
-str(SMMAL_output6)
-```
-
-In this case, the output is the covariate itself.
-
-
-```{r}
-SMMAL_output7 <- ada_lasso(Y=Y,X=X[, 1, drop = FALSE])
-print(SMMAL_output7)
-```
-
-In this case, the output is a single NULL value, indicating that no covariate was selected.
 
 

@@ -11,6 +11,7 @@
 #' @param X Matrix or data frame. Main covariates used for outcome and propensity score modeling.
 #' @param nfold Integer. Number of cross-validation folds. Default is 5.
 #' @param cf_model Character string. Modeling method to use in cross-fitting. One of \code{"bspline"}, \code{"xgboost"}, or \code{"randomforest"}. Default is "bspline".
+#' @param custom_model_fun A logical or function. If \code{NULL} or \code{FALSE}, bypasses adaptive-LASSO feature selection. Otherwise, enables two-stage tuning inside \code{compute_parameter()}.
 #'
 #' @return A list containing:
 #' \describe{
@@ -33,20 +34,9 @@
 
 
 
-SMMAL <- function(Y, A, S, X, nfold = 5, cf_model = "bspline") {
+SMMAL <- function(Y, A, S, X, nfold = 5, cf_model = "bspline",custom_model_fun=NULL) {
 
   N=length(Y)
-
-  if (any(is.na(Y) != is.na(A))) {
-    warning("Each element of Y and A must be either both missing or both observed.")
-  }
-
-  X <- ada_lasso(X, Y)
-
-
-  if (is.null(X) || ncol(X) == 0) {
-    stop("Error: 'X' must be a non-empty data frame.")
-  }
 
   # Combine covariates for W
   W <- cbind(S, X)
@@ -62,7 +52,7 @@ SMMAL <- function(Y, A, S, X, nfold = 5, cf_model = "bspline") {
 
   cf_model = "bspline"
   # Model training and ATE computation
-  result_parameter <- compute_parameter(nfold, Y, A, X, S, W, foldid, R, cf_model)
+  result_parameter <- compute_parameter(nfold, Y, A, X, S, W, foldid, R, cf_model,custom_model_fun)
 
   # Extract results
   pi1.bs <- result_parameter$pi1.bs

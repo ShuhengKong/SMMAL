@@ -4,7 +4,7 @@
 \alias{SMMAL}
 \title{Estimate Average Treatment Effect (ATE) via Semi-Supervised Learning Pipeline}
 \usage{
-SMMAL(Y, A, S, X, nfold = 5, cf_model = "bspline")
+SMMAL(Y, A, S, X, nfold = 5, cf_model = "bspline", custom_model_fun = NULL)
 }
 \arguments{
 \item{Y}{Numeric vector. Outcome variable (may contain \code{NA} for unlabelled observations).}
@@ -18,6 +18,8 @@ SMMAL(Y, A, S, X, nfold = 5, cf_model = "bspline")
 \item{nfold}{Integer. Number of cross-validation folds. Default is 5.}
 
 \item{cf_model}{Character string. Modeling method to use in cross-fitting. One of \code{"bspline"}, \code{"xgboost"}, or \code{"randomforest"}. Default is "bspline".}
+
+\item{custom_model_fun}{A logical or function. If \code{NULL} or \code{FALSE}, bypasses adaptive-LASSO feature selection. Otherwise, enables two-stage tuning inside \code{compute_parameter()}.}
 }
 \value{
 A list containing:

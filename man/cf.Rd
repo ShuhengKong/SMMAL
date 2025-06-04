@@ -4,7 +4,16 @@
 \alias{cf}
 \title{Cross-Fitting with Model Selection and Log Loss Evaluation}
 \usage{
-cf(Y, X, nfold, R, foldid, cf_model, sub_set = rep(TRUE, length(Y)))
+cf(
+  Y,
+  X,
+  nfold,
+  R,
+  foldid,
+  cf_model,
+  sub_set = rep(TRUE, length(Y)),
+  custom_model_fun = NULL
+)
 }
 \arguments{
 \item{Y}{Numeric or factor vector. The response variable, either binary (0/1) or continuous.
@@ -20,7 +29,9 @@ Only labelled observations (where \code{R = 1}) are used.}
 
 \item{cf_model}{Character string. Specifies the model type. Must be one of \code{"xgboost"}, \code{"bspline"}, or \code{"randomforest"}.}
 
-\item{sub_set}{Logical vector. Indicates which labelled samples to include in training.
+\item{sub_set}{Logical vector. Indicates which labelled samples to include in training.}
+
+\item{custom_model_fun}{A logical or function. If \code{NULL} or \code{FALSE}, bypasses adaptive-LASSO feature selection. Otherwise, enables two-stage tuning inside \code{compute_parameter()}.
 Defaults to all \code{TRUE}.}
 }
 \value{
@@ -29,7 +40,6 @@ A list containing:
 \item{models}{(Currently a placeholder) List of trained models per fold and tuning round.}
 \item{predictions}{List of out-of-fold predictions for each of the 5 tuning rounds.}
 \item{log_losses}{Numeric vector of log loss values for each tuning round.}
-\item{Tuning_Parameter}{The name of the hyperparameter varied across rounds (e.g., \code{"gamma"}, \code{"knots"}, or \code{"nodesize"}).}
 \item{best_rounds_index}{Integer index (1–5) of the round achieving the lowest \code{log_loss}.}
 \item{best_rounds_log_losses}{Minimum \code{log_loss} value achieved across rounds.}
 \item{best_rounds_prediction}{Vector of out-of-fold predictions from the best tuning round.}

@@ -13,6 +13,7 @@
 #' @param foldid Integer vector. Fold assignments for cross-fitting.
 #' @param R Binary vector. Label indicator: 1 = labelled (observed \code{A} and \code{Y}), 0 = unlabelled.
 #' @param cf_model Function. A user-supplied cross-fitting wrapper function (e.g., based on Super Learner or other learners).
+#' @param custom_model_fun A logical or function. If \code{NULL} or \code{FALSE}, bypasses adaptive-LASSO feature selection. Otherwise, enables two-stage tuning inside \code{compute_parameter()}.
 #'
 #' @return A named list of estimated nuisance parameters (each a numeric vector):
 #' \describe{
@@ -36,20 +37,20 @@
 #' @export
 
 
-compute_parameter <- function(nfold,Y,A,X,S,W,foldid,R,cf_model){
+compute_parameter <- function(nfold,Y,A,X,S,W,foldid,R,cf_model,custom_model_fun){
 
-  mu1.bs = cf(Y, X, nfold, R,foldid,cf_model,sub_set=A==1)
+  mu1.bs = cf(Y, X, nfold, R,foldid,cf_model,sub_set=A==1,custom_model_fun=custom_model_fun)
 
-  mu0.bs = cf(Y, X, nfold, R,foldid,cf_model,sub_set=A==0)
+  mu0.bs = cf(Y, X, nfold, R,foldid,cf_model,sub_set=A==0,custom_model_fun=custom_model_fun)
 
 
-  pi1.bs = cf(A, X, nfold, R,foldid,cf_model)
+  pi1.bs = cf(A, X, nfold, R,foldid,cf_model,custom_model_fun=custom_model_fun)
   # cap_pi1
-  imp.A.bs = cf(A, W, nfold, R,foldid,cf_model)
+  imp.A.bs = cf(A, W, nfold, R,foldid,cf_model,custom_model_fun=custom_model_fun)
   # m1
-  imp.A1Y1.bs = cf(Y, W, nfold, R, foldid,cf_model,sub_set = A==1)
+  imp.A1Y1.bs = cf(Y, W, nfold, R, foldid,cf_model,sub_set = A==1,custom_model_fun=custom_model_fun)
   # m0
-  imp.A0Y1.bs = cf(Y, W, nfold, R, foldid,cf_model,sub_set = A==0)
+  imp.A0Y1.bs = cf(Y, W, nfold, R, foldid,cf_model,sub_set = A==0,custom_model_fun=custom_model_fun)
 
 
   return(list(pi1.bs=pi1.bs$best_rounds_prediction,pi0.bs=1-pi1.bs$best_rounds_prediction,mu1.bs=mu1.bs$best_rounds_prediction,mu0.bs=mu0.bs$best_rounds_prediction,cap_pi1.bs=imp.A.bs$best_rounds_prediction,cap_pi0.bs=1-imp.A.bs$best_rounds_prediction, m1.bs=imp.A1Y1.bs$best_rounds_prediction, m0.bs=imp.A0Y1.bs$best_rounds_prediction))

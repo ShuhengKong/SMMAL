@@ -12,6 +12,7 @@
 #' @param foldid Integer vector. Fold assignments for cross-fitting (length equal to the full dataset).
 #' @param cf_model Character string. Specifies the model type. Must be one of \code{"xgboost"}, \code{"bspline"}, or \code{"randomforest"}.
 #' @param sub_set Logical vector. Indicates which labelled samples to include in training.
+#' @param custom_model_fun A logical or function. If \code{NULL} or \code{FALSE}, bypasses adaptive-LASSO feature selection. Otherwise, enables two-stage tuning inside \code{compute_parameter()}.
 #' Defaults to all \code{TRUE}.
 #'
 #' @return A list containing:
@@ -19,7 +20,6 @@
 #'   \item{models}{(Currently a placeholder) List of trained models per fold and tuning round.}
 #'   \item{predictions}{List of out-of-fold predictions for each of the 5 tuning rounds.}
 #'   \item{log_losses}{Numeric vector of log loss values for each tuning round.}
-#'   \item{Tuning_Parameter}{The name of the hyperparameter varied across rounds (e.g., \code{"gamma"}, \code{"knots"}, or \code{"nodesize"}).}
 #'   \item{best_rounds_index}{Integer index (1–5) of the round achieving the lowest \code{log_loss}.}
 #'   \item{best_rounds_log_losses}{Minimum \code{log_loss} value achieved across rounds.}
 #'   \item{best_rounds_prediction}{Vector of out-of-fold predictions from the best tuning round.}
@@ -74,15 +74,13 @@
 
 
 #function role:train and predict with selected model; compute evaluation metric(log loss)
-cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y))) {
+cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y)), custom_model_fun = NULL) {
+  N=length(Y)
   labeled_indices <- which(R == 1)
   Y <- Y[labeled_indices]
 
   foldid_labelled <- foldid[labeled_indices]
   sub_set <- sub_set[labeled_indices]
-
-  #foldid_labelled <- numeric(length(Y))
-  #foldid_labelled[R == 1] <- foldid[R == 1]
 
   if (is.data.frame(X)) {
     X <- as.matrix(X[labeled_indices, , drop = FALSE])
@@ -94,14 +92,47 @@ cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y))) {
   fold_predictions <- list()
   all_preds <- rep(NA, length(Y))
 
+  log_loss <- function(y_true, y_pred) {
+    epsilon <- 1e-15
+    y_pred <- pmax(pmin(y_pred, 1 - epsilon), epsilon)
+    return(-mean(y_true * log(y_pred) + (1 - y_true) * log(1 - y_pred)))
+  }
 
-  #Three model were selected
-  # xgboost
-  # bspline
-  # randomforest
+if (!is.null(custom_model_fun)) {
+    fold_predictions <- custom_model_fun(X,Y,foldid_labelled,sub_set,labeled_indices,nfold,log_loss)
+}
 
 
-  if(cf_model=="xgboost")
+
+
+
+  if (!is.null(cf_model) && cf_model == "glm" && is.null(custom_model_fun))
+  {
+    for (rounds_index in 1:5) {
+      all_preds <- rep(NA, N)
+
+      for (ifold in 1:nfold) {
+        trainpos <- which((foldid_labelled != ifold) & sub_set)
+        testpos  <- which(foldid_labelled == ifold)
+        X_train <- as.matrix(X[trainpos, , drop = FALSE])
+        Y_train <- as.numeric(Y[trainpos])
+        X_test  <- as.matrix(X[testpos, , drop = FALSE])
+        valid_idx <- which(!is.na(Y_train))
+        X_train <- X_train[valid_idx, , drop = FALSE]
+        Y_train <- Y_train[valid_idx]
+        df_train <- data.frame(Y = Y_train, X = X_train[, 1])
+        df_test  <- data.frame(X = X_test[, 1])
+
+        model <- glm(Y ~ X, data = df_train, family = binomial())
+        all_preds[testpos] <- predict(model, newdata = df_test, type = "response")
+      }
+
+      fold_predictions[[rounds_index]] <- all_preds
+    }
+
+  }
+
+  if(!is.null(cf_model) && cf_model=="xgboost" && is.null(custom_model_fun))
   {
     for (rounds_index in 1:5) {
       fold_preds <- vector("list", nfold)
@@ -141,10 +172,9 @@ cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y))) {
       fold_predictions[[rounds_index]] <- all_preds
     }
 
-    Tuning_Parameter="gamma"
   }
 
-  if(cf_model=="bspline")
+  if(!is.null(cf_model) && cf_model=="bspline" && is.null(custom_model_fun))
   {
     for (rounds_index in 1:5) {
       fold_preds <- vector("list", nfold)
@@ -180,10 +210,9 @@ cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y))) {
 
     }
 
-    Tuning_Parameter="(number of) knots"
   }
 
-  if(cf_model=="randomforest")
+  if(!is.null(cf_model) && cf_model=="randomforest" && is.null(custom_model_fun))
   {
     for (rounds_index in 1:5) {
       fold_preds <- vector("list", nfold)
@@ -205,25 +234,10 @@ cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y))) {
       fold_predictions[[rounds_index]] <- all_preds
     }
 
-    Tuning_Parameter="nodesize"
-  }
-
-
-
-  log_loss <- function(y_true, y_pred) {
-    epsilon <- 1e-15
-    y_pred <- pmax(pmin(y_pred, 1 - epsilon), epsilon)
-    return(-mean(y_true * log(y_pred) + (1 - y_true) * log(1 - y_pred)))
-  }
-
-  mse <- function(y_true, y_pred) {
-    return(mean((y_true - y_pred)^2))
   }
 
   valid_preds <- Filter(Negate(is.null), fold_predictions)
   log_losses <- sapply(valid_preds, function(pred) log_loss(Y, pred))
-  mse_values <- sapply(valid_preds, function(pred) mse(Y, pred))
-
 
   best_rounds_index <- which.min(log_losses)
 
@@ -233,7 +247,6 @@ cf <- function(Y, X, nfold, R,foldid,cf_model,sub_set = rep(TRUE, length(Y))) {
     models = results,
     predictions = valid_preds,
     log_losses = log_losses,
-    Tuning_Parameter=Tuning_Parameter,
     best_rounds_index = best_rounds_index,
     best_rounds_log_losses = log_losses[best_rounds_index],
     best_rounds_prediction = valid_preds[[best_rounds_index]]
