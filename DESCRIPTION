@@ -1,34 +1,14 @@
 Package: SMMAL
 Title: Semi-Supervised Estimation of Average Treatment Effects
 Version: 0.0.1
-Authors@R: 
-    c(
-      person(given = "Jue", family = "Hou", email = "hou00123@umn.edu", role = c("aut", "cre")),
-      person(given = "Yuming", family = "Zhang", email = "yumingzhang@hsph.harvard.edu", role = "aut"),
-      person(given = "Shuheng", family = "Kong", email = "kong0298@umn.edu", role = "aut")
-    )
-Description: 
-    Provides a pipeline for estimating the average treatment effect (ATE) using 
-    semi-supervised learning methods. Includes variable selection via LASSO, flexible outcome 
-    modeling using cross-fitting with options such as XGBoost, random forest, and B-splines, 
-    and doubly robust ATE estimation leveraging both labeled and unlabeled data. Vignette-based 
-    documentation is included.
+Authors@R: c(person(given = "Jue", family = "Hou", email = "hou00123@umn.edu", role = c("aut", "cre")),person(given = "Yuming", family = "Zhang", email = "yumingzhang@hsph.harvard.edu", role = "aut"),person(given = "Shuheng", family = "Kong", email = "kong0298@umn.edu", role = "aut"))
+Description: Provides a pipeline for estimating the average treatment effect (ATE) via semi-supervised learning (Hou et al. 2023). Outcome regression is fit with cross-fitting using XGBoost (Chen & Guestrin 2016), random forests (Breiman 2001), or B-splines (de Boor 1978). Doubly robust ATE estimation leverages both labeled and unlabeled data under a semi-supervised missing-data framework (Bang & Robins 2005). A detailed vignette is included.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Depends: 
-    R (>= 3.5.0)
-Imports:
-    glmnet,
-    randomForest,
-    splines2,
-    xgboost,
-    stats,
-    utils
-Suggests: 
-    knitr,
-    rmarkdown,
-    testthat (>= 3.0.0)
+Depends: R (>= 3.5.0)
+Imports:glmnet,randomForest,splines2,xgboost,stats,utils
+Suggests: knitr,rmarkdown,testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3

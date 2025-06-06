@@ -45,7 +45,7 @@ of lasso penalty values).  Internally, it:
 }
 }
 \examples{
-\dontrun{
+\donttest{
 # Assume param_fun() is defined elsewhere and returns:
 #   list(ridge = c(0.01, 0.1, 1), lambda = exp(seq(log(0.001), log(1), length = 50)))
 
